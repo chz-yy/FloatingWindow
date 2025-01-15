@@ -8,7 +8,21 @@ class FloatingWindow:
     def __init__(self, root):
         self.root = root
         self.root.title("悬浮小窗")
-        self.root.geometry("200x300+1250+100")
+        
+        # 获取屏幕尺寸
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # 设置窗口大小
+        window_width = 200
+        window_height = 300
+        
+        # 计算右上角位置
+        x_position = screen_width - window_width - 80  # 距离右边缘20像素
+        y_position = 100  # 距离顶部100像素
+        
+        # 设置窗口位置
+        self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
         self.root.overrideredirect(True)
         self.root.attributes("-alpha", 0.8)
 
@@ -22,6 +36,14 @@ class FloatingWindow:
 
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # 添加数据文件路径的初始化
+        self.data_dir = os.path.join(os.path.expanduser('~'), 'Documents', 'FloatingWindow')
+        self.data_file = os.path.join(self.data_dir, 'data.json')
+        
+        # 确保目录存在
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
 
         self.load_content()
 
@@ -69,8 +91,8 @@ class FloatingWindow:
                        expand=[("selected", [1, 2, 1, 0])])  # 选中时稍微扩展
 
     def load_content(self):
-        if os.path.exists("E:\\data.json"):
-            with open("E:\\data.json", "r", encoding="utf-8") as f:
+        if os.path.exists(self.data_file):
+            with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for page_data in data.get("contents", []):
                     self.add_new_page(page_data["name"], page_data["content"])
@@ -176,14 +198,14 @@ class FloatingWindow:
             self.notebook.forget(tab_id)
 
     def delete_page_data(self, index):
-        if os.path.exists("E:\\data.json"):
-            with open("E:\\data.json", "r", encoding="utf-8") as f:
+        if os.path.exists(self.data_file):
+            with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             
             if "contents" in data and index < len(data["contents"]):
                 del data["contents"][index]
                 
-                with open("E:\\data.json", "w", encoding="utf-8") as f:
+                with open(self.data_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, ensure_ascii=False, indent=4)
 
     def prev_page(self):
@@ -210,7 +232,7 @@ class FloatingWindow:
                 "name": self.notebook.tab(tab, "text"),
                 "content": text_box.get("1.0", tk.END).strip()
             })
-        with open("E:\\data.json", "w", encoding="utf-8") as f:
+        with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump({"contents": contents}, f, ensure_ascii=False, indent=4)
 
     def restore_from_json(self):
